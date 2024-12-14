@@ -71,8 +71,27 @@
       <input type="text" id="new-task" placeholder="Nueva actividad...">
       <button id="add-task">Agregar</button>
     </section>
+
+    <button onclick="testNotifications()">
+      Test Notificaiones
+    </button>
   </main>
   <script src="../../scripts/global.js"></script>
   <script src="../../scripts/home.js"></script>
+  <script>
+    const testNotifications = () => {
+      new Notification("Prueba manual", { body: "Esto es una prueba.", icon: "https://via.placeholder.com/128" });
+      console.log("Test notifications");
+      if (Notification.permission === "granted") {
+        console.log("Test permissions granted");
+        new Notification("💋 ¡Besos recibidos!", {
+          body: "juasjuas",
+          icon: "https://via.placeholder.com/128" // Cambia a un ícono válido
+        });
+      } else {
+        console.warn("Permiso de notificación no otorgado");
+      }
+    };
+  </script>
 </body>
 </html>
