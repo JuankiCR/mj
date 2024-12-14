@@ -6,14 +6,29 @@ let socket;
 const connectWebSocket = () => {
   socket = new WebSocket(SOCKET_URL);
 
-  // Evento: Conexión exitosa
-  socket.addEventListener("open", () => {
+  socket.addEventListener("open", async () => {
     console.log("Conectado al servidor WebSocket");
 
-    // Enviar el username al conectarse
     const username = localStorage.getItem("username");
+
     if (username) {
-      socket.send(JSON.stringify({ type: "register", username }));
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+
+      if (subscription) {
+        socket.send(
+          JSON.stringify({
+            type: "register",
+            username,
+            subscription
+          })
+        );
+        console.log("Datos enviados al servidor WebSocket:", { username, subscription });
+      } else {
+        console.warn("No se encontró suscripción push activa.");
+      }
+    } else {
+      console.warn("El usuario no está configurado en localStorage.");
     }
   });
 
