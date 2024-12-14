@@ -67,10 +67,17 @@ const setupPushNotifications = () => {
       registration.pushManager
         .subscribe({
           userVisibleOnly: true,
-          applicationServerKey: "BKGVsfK793n5SZzcfjNf9ejKxWgDMISSGpPAwfQ1YZaEXyWmOxvAD4XOZxsEVUnP1c5Qhu9OrNZjBPq4T262ChU"
+          applicationServerKey: "QktHVnNmSzc5M241U1p6Y2ZqTmY5ZWpLeFdnRE1JU1NHcFBBd2ZRMVlaYUVYeVdtT3h2QUQ0WE9aeHNFVlVuUDFjNVFodTlPck5aakJQcTRUMjYyQ2hV"
         })
         .then((subscription) => {
           console.log("Suscripción push creada:", subscription);
+
+          // Obtener el nombre de usuario
+          const username = localStorage.getItem("username");
+          if (!username) {
+            console.warn("El username no está configurado.");
+            return;
+          }
 
           // Enviar la suscripción al servidor
           fetch("https://api.juankicr.dev/push-subscribe", {
@@ -78,7 +85,7 @@ const setupPushNotifications = () => {
             headers: {
               "Content-Type": "application/json"
             },
-            body: JSON.stringify(subscription)
+            body: JSON.stringify({ subscription, username })
           })
             .then((response) => response.json())
             .then((data) => {
@@ -92,8 +99,6 @@ const setupPushNotifications = () => {
           console.error("Error al suscribirse a notificaciones push:", error);
         });
     });
-  } else {
-    console.warn("Push Notifications no están soportadas en este navegador.");
   }
 };
 
