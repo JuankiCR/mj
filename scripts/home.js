@@ -4,43 +4,44 @@ let socket;
 
 // Función para iniciar la conexión WebSocket
 const connectWebSocket = () => {
+  const username = localStorage.getItem("username");
+
+  if (!username) {
+    console.warn("No se encontró un usuario configurado. Esperando configuración...");
+    return;
+  }
+
   socket = new WebSocket(SOCKET_URL);
 
   socket.addEventListener("open", async () => {
     console.log("Conectado al servidor WebSocket");
 
-    const username = localStorage.getItem("username");
+    // Configurar o recuperar la suscripción push
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
 
-    if (username) {
-      // Configurar o recuperar la suscripción push
-      const registration = await navigator.serviceWorker.ready;
-      let subscription = await registration.pushManager.getSubscription();
-
-      if (!subscription) {
-        try {
-          subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: "QktHVnNmSzc5M241U1p6Y2ZqTmY5ZWpLeFdnRE1JU1NHcFBBd2ZRMVlaYUVYeVdtT3h2QUQ0WE9aeHNFVlVuUDFjNVFodTlPck5aakJQcTRUMjYyQ2hV"
-          });
-          console.log("Nueva suscripción push creada:", subscription);
-        } catch (error) {
-          console.error("Error al crear la suscripción push:", error);
-          return;
-        }
+    if (!subscription) {
+      try {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: "QktHVnNmSzc5M241U1p6Y2ZqTmY5ZWpLeFdnRE1JU1NHcFBBd2ZRMVlaYUVYeVdtT3h2QUQ0WE9aeHNFVlVuUDFjNVFodTlPck5aakJQcTRUMjYyQ2hV"
+        });
+        console.log("Nueva suscripción push creada:", subscription);
+      } catch (error) {
+        console.error("Error al crear la suscripción push:", error);
+        return;
       }
-
-      // Enviar la información al servidor WebSocket
-      socket.send(
-        JSON.stringify({
-          type: "register",
-          username,
-          subscription
-        })
-      );
-      console.log("Datos enviados al servidor WebSocket:", { username, subscription });
-    } else {
-      console.warn("El usuario no está configurado en localStorage.");
     }
+
+    // Enviar la información al servidor WebSocket
+    socket.send(
+      JSON.stringify({
+        type: "register",
+        username,
+        subscription
+      })
+    );
+    console.log("Datos enviados al servidor WebSocket:", { username, subscription });
   });
 
   // Evento: Mensaje recibido desde el servidor
@@ -222,9 +223,11 @@ window.onload = () => {
     const todoListWrapper = document.getElementById("todoSection");
     whosThereWrapper.classList.add("hidden");
     todoListWrapper.classList.remove("sectionHiddenNO");
-  }
 
-  connectWebSocket(); // La suscripción push se maneja en el WebSocket.
+    connectWebSocket(); // Conectar al WebSocket solo si hay un usuario configurado
+  } else {
+    console.warn("No se encontró un usuario configurado. Por favor, establece un nombre de usuario.");
+  }
 
   setTimeout(() => {
     const hearts = document.querySelectorAll(".heart");
