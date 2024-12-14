@@ -1,3 +1,52 @@
+// Conectar al WebSocket
+const socket = new WebSocket("wss://api.juankicr.dev/");
+
+// Evento: Conexión exitosa
+socket.addEventListener("open", () => {
+  console.log("Conectado al servidor WebSocket");
+
+  // Enviar el username al conectarse
+  const username = localStorage.getItem("username");
+  if (username) {
+    socket.send(JSON.stringify({ type: "register", username }));
+  }
+});
+
+// Evento: Mensaje recibido desde el servidor
+socket.addEventListener("message", (event) => {
+  const data = JSON.parse(event.data);
+
+  if (data.type === "ping") {
+    console.log("Ping recibido del servidor");
+    socket.send(JSON.stringify({ type: "pong" })); // Responder al ping
+  }
+
+  if (data.type === "receiveKiss") {
+    console.log(data.message);
+    if (Notification.permission === "granted") {
+      new Notification("💋 ¡Besos recibidos!", { body: data.message });
+    }
+  }
+
+  if (data.type === "receiveHug") {
+    console.log(data.message);
+    if (Notification.permission === "granted") {
+      new Notification("🤗 ¡Abrazos recibidos!", { body: data.message });
+    }
+  }
+});
+
+// Evento: Error en la conexión
+socket.addEventListener("error", (error) => {
+  console.error("Error en la conexión WebSocket:", error);
+});
+
+// Evento: Conexión cerrada
+socket.addEventListener("close", () => {
+  console.log("Conexión cerrada con el servidor WebSocket");
+});
+
+// Crear corazones animados
 const createHearts = () => {
   const background = document.getElementById("background");
 
@@ -19,16 +68,15 @@ const createHearts = () => {
       heart.style.animationTimingFunction = "ease-in-out";
       heart.style.animationIterationCount = "infinite";
 
-      const transitionTime = Math.random() + .3;
+      const transitionTime = Math.random() + 0.3;
       heart.style.transition = `top ${transitionTime}s ease-in-out, left ${transitionTime}s ease-in-out`;
-
-      heart.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
 
       background.appendChild(heart);
     }
   }
-}
+};
 
+// Cuenta regresiva para el aniversario
 function startCountdown() {
   const AnniversaryDay = 7;
   const nextAnniversary = new Date();
@@ -36,7 +84,6 @@ function startCountdown() {
   nextAnniversary.setDate(AnniversaryDay);
   nextAnniversary.setHours(0, 0, 0, 0);
 
-  
   function updateTimer() {
     const now = new Date();
     const diff = nextAnniversary - now;
@@ -57,6 +104,7 @@ function startCountdown() {
   setInterval(updateTimer, 1000);
 }
 
+// Configurar botones de interacción
 function setupInteractionButtons() {
   const kissButton = document.getElementById("sendKisses");
   const hugButton = document.getElementById("sendHugs");
@@ -73,7 +121,7 @@ function setupInteractionButtons() {
 
     clearTimeout(kissTimeout);
     kissTimeout = setTimeout(() => {
-      alert(`¡Enviaste ${kissCount} besos!`);
+      socket.send(JSON.stringify({ type: "sendKiss", count: kissCount }));
       kissCount = 0;
       kisCounter.innerText = "Besos: 0";
     }, 2000);
@@ -85,47 +133,67 @@ function setupInteractionButtons() {
 
     clearTimeout(hugTimeout);
     hugTimeout = setTimeout(() => {
-      alert(`¡Enviaste ${hugCount} abrazos!`);
+      socket.send(JSON.stringify({ type: "sendHug", count: hugCount }));
       hugCount = 0;
       hugCounter.innerText = "Abrazos: 0";
     }, 2000);
   });
 }
 
+// Verificar si hay un usuario configurado
 const usernameIsSet = () => {
   return localStorage.getItem("username") !== null;
-}
+};
 
+// Configurar el nombre del usuario
 const setUsername = (username) => {
   if (username) {
     localStorage.setItem("username", username);
+
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: "register", username }));
+    }
+
     if (usernameIsSet()) {
       const whosThereWrapper = document.getElementById("whosThere");
       const todoListWrapper = document.getElementById("todoSection");
       whosThereWrapper.classList.add("hidden");
-      todoListWrapper.classList.remove("sectionHidden");
+      todoListWrapper.classList.remove("sectionHiddenNO");
     }
   }
-}
+};
 
+// Inicialización al cargar la página
 window.onload = () => {
   createHearts();
+
+  if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted") {
+        console.log("Permiso para notificaciones otorgado");
+      } else {
+        console.log("Permiso para notificaciones denegado");
+      }
+    });
+  }
+
   if (usernameIsSet()) {
     const whosThereWrapper = document.getElementById("whosThere");
     const todoListWrapper = document.getElementById("todoSection");
     whosThereWrapper.classList.add("hidden");
-    todoListWrapper.classList.remove("sectionHidden");
+    todoListWrapper.classList.remove("sectionHiddenNO");
   }
+
   setTimeout(() => {
     const hearts = document.querySelectorAll(".heart");
-
-    hearts.forEach(heart => {
+    hearts.forEach((heart) => {
       const x = Math.random() * 98;
       const y = Math.random() * 98;
       heart.style.left = `${x}%`;
       heart.style.top = `${y}%`;
     });
   }, 600);
+
   startCountdown();
   setupInteractionButtons();
-}
+};
