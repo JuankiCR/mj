@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="../../styles/globals.css">
+  <link rel="stylesheet" href="../../styles/home.css">
+  <title>💘 | M&J </title>
+</head>
+<body>
+  <main>
+    <div id="background"></div>
+    <section id="countdownSection">
+      <div class="image_wrapper">
+        <img 
+          id="mj"  
+          alt="mj"
+          src="../../assets/mj.jpg" 
+          loading="lazy"
+        >
+      </div>
+      <div id="countdown">
+        <h2>Próximo Aniversario</h2>
+        <p id="timer">Cargando...</p>
+      </div>
+    </section>
+
+    <section id="sendLoveSection">
+      <div id="whosThere">
+        <h2>💖 ¿Quién anda por aqui? 💖</h2>
+        <div class="whos_there_buttons_wrapper">
+          <button 
+            id="send-m"
+            onclick="setUsername('Mel')"
+          >
+            💛 Mel 💛
+          </button>
+          <button 
+            id="send-j"
+            onclick="setUsername('Juanki')"
+          >
+            💗 Juanki 💗
+          </button>
+        </div>
+      </div>
+      <div class="love_buttons_wrapper">
+        <div id="kissCounterWrapper">
+          <span>💋</span>
+          <span id="kissCounter">
+            Besos: 0
+          </span>
+        </div>
+        <div id="hugCounterWrapper">
+          <span>🤗</span>
+          <span id="hugCounter">
+            Abrazos: 0
+          </span>
+        </div>
+        <button id="sendKisses">Enviar Besos</button>
+        <button id="sendHugs">Enviar Abrazos</button>
+      </div>
+    </section>
+
+    <section id="todoSection" class="sectionHidden">
+      <h2>Lista de Actividades</h2>
+      <ul id="tasks">
+        <li>Escribir una carta</li>
+        <li>Planear una cita especial</li>
+      </ul>
+      <input type="text" id="new-task" placeholder="Nueva actividad...">
+      <button id="add-task">Agregar</button>
+    </section>
+  </main>
+  <script src="../../scripts/global.js"></script>
+  <script src="../../scripts/home.js"></script>
+</body>
+</html>
