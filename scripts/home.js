@@ -1,51 +1,101 @@
 // Conectar al WebSocket
-const socket = new WebSocket("wss://api.juankicr.dev/");
+const SOCKET_URL = "wss://api.juankicr.dev/";
+let socket;
 
-// Evento: Conexión exitosa
-socket.addEventListener("open", () => {
-  console.log("Conectado al servidor WebSocket");
+// Función para iniciar la conexión WebSocket
+const connectWebSocket = () => {
+  socket = new WebSocket(SOCKET_URL);
 
-  // Enviar el username al conectarse
-  const username = localStorage.getItem("username");
-  if (username) {
-    socket.send(JSON.stringify({ type: "register", username }));
-  }
-});
+  // Evento: Conexión exitosa
+  socket.addEventListener("open", () => {
+    console.log("Conectado al servidor WebSocket");
 
-// Evento: Mensaje recibido desde el servidor
-socket.addEventListener("message", (event) => {
-  const data = JSON.parse(event.data);
-  console.log("Mensaje recibido del servidor:", data.type);
-
-  if (data.type === "ping") {
-    console.log("Ping recibido del servidor");
-    socket.send(JSON.stringify({ type: "pong" })); // Responder al ping
-  }
-
-  if (data.type === "receiveKiss") {
-    console.log(data.message);
-    if (Notification.permission === "granted") {
-      new Notification("💋 ¡Besos recibidos!", { body: data.message });
+    // Enviar el username al conectarse
+    const username = localStorage.getItem("username");
+    if (username) {
+      socket.send(JSON.stringify({ type: "register", username }));
     }
-  }
+  });
 
-  if (data.type === "receiveHug") {
-    console.log(data.message);
-    if (Notification.permission === "granted") {
-      new Notification("🤗 ¡Abrazos recibidos!", { body: data.message });
+  // Evento: Mensaje recibido desde el servidor
+  socket.addEventListener("message", (event) => {
+    const data = JSON.parse(event.data);
+    console.log("Mensaje recibido del servidor:", data.type);
+
+    if (data.type === "ping") {
+      console.log("Ping recibido del servidor");
+      socket.send(JSON.stringify({ type: "pong" })); // Responder al ping
     }
+
+    if (data.type === "receiveKiss") {
+      console.log(data.message);
+      showNotification("💋 ¡Besos recibidos!", data.message);
+    }
+
+    if (data.type === "receiveHug") {
+      console.log(data.message);
+      showNotification("🤗 ¡Abrazos recibidos!", data.message);
+    }
+  });
+
+  // Evento: Error en la conexión
+  socket.addEventListener("error", (error) => {
+    console.error("Error en la conexión WebSocket:", error);
+  });
+
+  // Evento: Conexión cerrada
+  socket.addEventListener("close", () => {
+    console.log("Conexión cerrada con el servidor WebSocket. Reintentando...");
+    setTimeout(connectWebSocket, 5000); // Intentar reconectar después de 5 segundos
+  });
+};
+
+// Función para mostrar notificaciones (local o push)
+const showNotification = (title, body) => {
+  if ("Notification" in window && Notification.permission === "granted") {
+    // Notificación local
+    new Notification(title, { body });
+  } else {
+    console.warn("Permiso de notificación no otorgado.");
   }
-});
+};
 
-// Evento: Error en la conexión
-socket.addEventListener("error", (error) => {
-  console.error("Error en la conexión WebSocket:", error);
-});
+// Configurar Push Notifications
+const setupPushNotifications = () => {
+  if ("serviceWorker" in navigator && "PushManager" in window) {
+    navigator.serviceWorker.ready.then((registration) => {
+      registration.pushManager
+        .subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: "BKGVsfK793n5SZzcfjNf9ejKxWgDMISSGpPAwfQ1YZaEXyWmOxvAD4XOZxsEVUnP1c5Qhu9OrNZjBPq4T262ChU"
+        })
+        .then((subscription) => {
+          console.log("Suscripción push creada:", subscription);
 
-// Evento: Conexión cerrada
-socket.addEventListener("close", () => {
-  console.log("Conexión cerrada con el servidor WebSocket");
-});
+          // Enviar la suscripción al servidor
+          fetch("https://api.juankicr.dev/push-subscribe", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(subscription)
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Suscripción almacenada en el servidor:", data);
+            })
+            .catch((error) => {
+              console.error("Error al enviar la suscripción al servidor:", error);
+            });
+        })
+        .catch((error) => {
+          console.error("Error al suscribirse a notificaciones push:", error);
+        });
+    });
+  } else {
+    console.warn("Push Notifications no están soportadas en este navegador.");
+  }
+};
 
 // Crear corazones animados
 const createHearts = () => {
@@ -164,7 +214,7 @@ const setUsername = (username) => {
   }
 };
 
-// Inicialización al cargar la página
+// Función de inicialización
 window.onload = () => {
   createHearts();
 
@@ -184,6 +234,9 @@ window.onload = () => {
     whosThereWrapper.classList.add("hidden");
     todoListWrapper.classList.remove("sectionHiddenNO");
   }
+
+  setupPushNotifications();
+  connectWebSocket();
 
   setTimeout(() => {
     const hearts = document.querySelectorAll(".heart");

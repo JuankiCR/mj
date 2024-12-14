@@ -10,6 +10,7 @@ const urlsToCache = [
   "/assets/mj.jpg"
 ];
 
+// Manejar instalación y cacheo de archivos
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -19,6 +20,7 @@ self.addEventListener("install", (event) => {
   );
 });
 
+// Manejar activación y limpiar caché antiguo
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -34,6 +36,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Manejar solicitudes de red
 self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
@@ -45,4 +48,28 @@ self.addEventListener("fetch", (event) => {
       return fetch(event.request);
     })
   );
+});
+
+// Manejar notificaciones push
+self.addEventListener("push", (event) => {
+  console.log("Notificación push recibida:", event);
+
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || "Nueva notificación";
+  const options = {
+    body: data.body || "Tienes un nuevo mensaje.",
+    icon: data.icon || "/assets/images/icons/icon-192x192.png",
+    data: data.url || "/"
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Manejar clics en las notificaciones
+self.addEventListener("notificationclick", (event) => {
+  console.log("Notificación clickeada:", event.notification);
+  const url = event.notification.data || "/";
+  event.notification.close();
+
+  event.waitUntil(clients.openWindow(url));
 });
