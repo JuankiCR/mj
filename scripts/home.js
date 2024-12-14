@@ -12,21 +12,32 @@ const connectWebSocket = () => {
     const username = localStorage.getItem("username");
 
     if (username) {
+      // Configurar o recuperar la suscripción push
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      let subscription = await registration.pushManager.getSubscription();
 
-      if (subscription) {
-        socket.send(
-          JSON.stringify({
-            type: "register",
-            username,
-            subscription
-          })
-        );
-        console.log("Datos enviados al servidor WebSocket:", { username, subscription });
-      } else {
-        console.warn("No se encontró suscripción push activa.");
+      if (!subscription) {
+        try {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: "QktHVnNmSzc5M241U1p6Y2ZqTmY5ZWpLeFdnRE1JU1NHcFBBd2ZRMVlaYUVYeVdtT3h2QUQ0WE9aeHNFVlVuUDFjNVFodTlPck5aakJQcTRUMjYyQ2hV"
+          });
+          console.log("Nueva suscripción push creada:", subscription);
+        } catch (error) {
+          console.error("Error al crear la suscripción push:", error);
+          return;
+        }
       }
+
+      // Enviar la información al servidor WebSocket
+      socket.send(
+        JSON.stringify({
+          type: "register",
+          username,
+          subscription
+        })
+      );
+      console.log("Datos enviados al servidor WebSocket:", { username, subscription });
     } else {
       console.warn("El usuario no está configurado en localStorage.");
     }
@@ -72,52 +83,6 @@ const showNotification = (title, body) => {
     new Notification(title, { body });
   } else {
     console.warn("Permiso de notificación no otorgado.");
-  }
-};
-
-// Configurar Push Notifications
-const setupPushNotifications = () => {
-  if ("serviceWorker" in navigator && "PushManager" in window) {
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.pushManager
-        .subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: "QktHVnNmSzc5M241U1p6Y2ZqTmY5ZWpLeFdnRE1JU1NHcFBBd2ZRMVlaYUVYeVdtT3h2QUQ0WE9aeHNFVlVuUDFjNVFodTlPck5aakJQcTRUMjYyQ2hV"
-        })
-        .then((subscription) => {
-          console.log("Suscripción push creada:", subscription);
-
-          // Obtener el nombre de usuario
-          const username = localStorage.getItem("username");
-          if (!username) {
-            console.warn("El username no está configurado.");
-            return;
-          }
-
-          // Ver la solicitud antes de enviarla
-          const requestBody = { subscription, username };
-          console.log("Solicitud al servidor (antes de enviar):", requestBody);
-
-          // Enviar la suscripción al servidor
-          fetch("https://api.juankicr.dev/push-subscribe", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(requestBody)
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              console.log("Suscripción almacenada en el servidor:", data);
-            })
-            .catch((error) => {
-              console.error("Error al enviar la suscripción al servidor:", error);
-            });
-        })
-        .catch((error) => {
-          console.error("Error al suscribirse a notificaciones push:", error);
-        });
-    });
   }
 };
 
@@ -259,8 +224,7 @@ window.onload = () => {
     todoListWrapper.classList.remove("sectionHiddenNO");
   }
 
-  setupPushNotifications();
-  connectWebSocket();
+  connectWebSocket(); // La suscripción push se maneja en el WebSocket.
 
   setTimeout(() => {
     const hearts = document.querySelectorAll(".heart");
