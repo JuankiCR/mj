@@ -3,9 +3,7 @@ const SOCKET_URL = "wss://api.juankicr.dev/";
 let socket;
 
 // Función para iniciar la conexión WebSocket
-const connectWebSocket = () => {
-  const username = localStorage.getItem("username");
-
+const connectWebSocket = (username) => {
   if (!username) {
     console.warn("No se encontró un usuario configurado. Esperando configuración...");
     return;
@@ -73,7 +71,7 @@ const connectWebSocket = () => {
   // Evento: Conexión cerrada
   socket.addEventListener("close", () => {
     console.log("Conexión cerrada con el servidor WebSocket. Reintentando...");
-    setTimeout(connectWebSocket, 5000); // Intentar reconectar después de 5 segundos
+    setTimeout(() => connectWebSocket(username), 5000); // Intentar reconectar después de 5 segundos
   });
 };
 
@@ -190,21 +188,22 @@ const usernameIsSet = () => {
 const setUsername = (username) => {
   if (username) {
     localStorage.setItem("username", username);
+    console.log(`Usuario configurado: ${username}`);
 
-    if (socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: "register", username }));
-    }
+    const whosThereWrapper = document.getElementById("whosThere");
+    const todoListWrapper = document.getElementById("todoSection");
 
-    if (usernameIsSet()) {
-      const whosThereWrapper = document.getElementById("whosThere");
-      const todoListWrapper = document.getElementById("todoSection");
+    if (whosThereWrapper && todoListWrapper) {
       whosThereWrapper.classList.add("hidden");
       todoListWrapper.classList.remove("sectionHiddenNO");
     }
+
+    connectWebSocket(username); // Conectar al WebSocket al configurar el usuario
+  } else {
+    console.error("El nombre de usuario no es válido.");
   }
 };
 
-// Función de inicialización
 window.onload = () => {
   createHearts();
 
@@ -219,14 +218,20 @@ window.onload = () => {
   }
 
   if (usernameIsSet()) {
+    const username = localStorage.getItem("username");
+    console.log("Usuario encontrado en localStorage:", username);
+
     const whosThereWrapper = document.getElementById("whosThere");
     const todoListWrapper = document.getElementById("todoSection");
-    whosThereWrapper.classList.add("hidden");
-    todoListWrapper.classList.remove("sectionHiddenNO");
 
-    connectWebSocket(); // Conectar al WebSocket solo si hay un usuario configurado
+    if (whosThereWrapper && todoListWrapper) {
+      whosThereWrapper.classList.add("hidden");
+      todoListWrapper.classList.remove("sectionHiddenNO");
+    }
+
+    connectWebSocket(username);
   } else {
-    console.warn("No se encontró un usuario configurado. Por favor, establece un nombre de usuario.");
+    console.warn("No se encontró un usuario configurado. Esperando configuración...");
   }
 
   setTimeout(() => {
