@@ -15,6 +15,7 @@ socket.addEventListener("open", () => {
 // Evento: Mensaje recibido desde el servidor
 socket.addEventListener("message", (event) => {
   const data = JSON.parse(event.data);
+  console.log("Mensaje recibido del servidor:", data.type);
 
   if (data.type === "ping") {
     console.log("Ping recibido del servidor");
