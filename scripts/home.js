@@ -3,18 +3,21 @@ const SOCKET_URL = "wss://api.juankicr.dev/";
 let socket;
 
 // Función para iniciar la conexión WebSocket
-const connectWebSocket = (username) => {
+const connectWebSocket = () => {
+  const username = localStorage.getItem("username");
+
   if (!username) {
     console.warn("No se encontró un usuario configurado. Esperando configuración...");
     return;
   }
+
+  console.log(`Intentando conectar al WebSocket con el usuario: ${username}`);
 
   socket = new WebSocket(SOCKET_URL);
 
   socket.addEventListener("open", async () => {
     console.log("Conectado al servidor WebSocket");
 
-    // Configurar o recuperar la suscripción push
     const registration = await navigator.serviceWorker.ready;
     let subscription = await registration.pushManager.getSubscription();
 
@@ -31,6 +34,12 @@ const connectWebSocket = (username) => {
       }
     }
 
+    // Validar datos antes de enviarlos
+    if (!username || username === "undefined") {
+      console.error("El username es inválido. No se puede registrar.");
+      return;
+    }
+
     // Enviar la información al servidor WebSocket
     socket.send(
       JSON.stringify({
@@ -40,38 +49,38 @@ const connectWebSocket = (username) => {
       })
     );
     console.log("Datos enviados al servidor WebSocket:", { username, subscription });
+
+    // Intentar enviar la suscripción al servidor de notificaciones (opcional)
+    try {
+      const response = await fetch("https://api.juankicr.dev/push-subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, subscription })
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        console.error("Error al enviar la suscripción al servidor:", result.message);
+      } else {
+        console.log("Suscripción almacenada en el servidor:", result);
+      }
+    } catch (error) {
+      console.error("Error al enviar la suscripción al servidor:", error);
+    }
   });
 
-  // Evento: Mensaje recibido desde el servidor
   socket.addEventListener("message", (event) => {
     const data = JSON.parse(event.data);
     console.log("Mensaje recibido del servidor:", data.type);
-
-    if (data.type === "ping") {
-      console.log("Ping recibido del servidor");
-      socket.send(JSON.stringify({ type: "pong" })); // Responder al ping
-    }
-
-    if (data.type === "receiveKiss") {
-      console.log(data.message);
-      showNotification("💋 ¡Besos recibidos!", data.message);
-    }
-
-    if (data.type === "receiveHug") {
-      console.log(data.message);
-      showNotification("🤗 ¡Abrazos recibidos!", data.message);
-    }
   });
 
-  // Evento: Error en la conexión
   socket.addEventListener("error", (error) => {
     console.error("Error en la conexión WebSocket:", error);
   });
 
-  // Evento: Conexión cerrada
   socket.addEventListener("close", () => {
     console.log("Conexión cerrada con el servidor WebSocket. Reintentando...");
-    setTimeout(() => connectWebSocket(username), 5000); // Intentar reconectar después de 5 segundos
+    setTimeout(() => connectWebSocket(), 5000);
   });
 };
 
@@ -186,26 +195,40 @@ const usernameIsSet = () => {
 
 // Configurar el nombre del usuario
 const setUsername = (username) => {
-  if (username) {
-    localStorage.setItem("username", username);
-    console.log(`Usuario configurado: ${username}`);
-
-    const whosThereWrapper = document.getElementById("whosThere");
-    const todoListWrapper = document.getElementById("todoSection");
-
-    if (whosThereWrapper && todoListWrapper) {
-      whosThereWrapper.classList.add("hidden");
-      todoListWrapper.classList.remove("sectionHiddenNO");
-    }
-
-    connectWebSocket(username); // Conectar al WebSocket al configurar el usuario
-  } else {
-    console.error("El nombre de usuario no es válido.");
+  if (!username || typeof username !== "string" || username.trim() === "") {
+    console.error("El username proporcionado no es válido:", username);
+    return;
   }
+
+  username = username.trim();
+  localStorage.setItem("username", username);
+  console.log(`Usuario configurado: ${username}`);
+
+  const whosThereWrapper = document.getElementById("whosThere");
+  const todoListWrapper = document.getElementById("todoSection");
+
+  if (whosThereWrapper && todoListWrapper) {
+    whosThereWrapper.classList.add("hidden");
+    todoListWrapper.classList.remove("sectionHiddenNO");
+  }
+
+  connectWebSocket(); // Conectar al WebSocket con el usuario configurado
 };
 
 window.onload = () => {
   createHearts();
+  setTimeout(() => {
+    const hearts = document.querySelectorAll(".heart");
+    hearts.forEach((heart) => {
+      const x = Math.random() * 98;
+      const y = Math.random() * 98;
+      heart.style.left = `${x}%`;
+      heart.style.top = `${y}%`;
+    });
+  }, 600);
+
+  startCountdown();
+  setupInteractionButtons();
 
   if ("Notification" in window && Notification.permission !== "granted") {
     Notification.requestPermission().then((permission) => {
@@ -229,21 +252,8 @@ window.onload = () => {
       todoListWrapper.classList.remove("sectionHiddenNO");
     }
 
-    connectWebSocket(username);
+    connectWebSocket(); // Conectar si el usuario ya está configurado
   } else {
-    console.warn("No se encontró un usuario configurado. Esperando configuración...");
+    console.warn("No se encontró un usuario configurado. Por favor, establece un nombre de usuario.");
   }
-
-  setTimeout(() => {
-    const hearts = document.querySelectorAll(".heart");
-    hearts.forEach((heart) => {
-      const x = Math.random() * 98;
-      const y = Math.random() * 98;
-      heart.style.left = `${x}%`;
-      heart.style.top = `${y}%`;
-    });
-  }, 600);
-
-  startCountdown();
-  setupInteractionButtons();
 };
