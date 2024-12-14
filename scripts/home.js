@@ -79,13 +79,17 @@ const setupPushNotifications = () => {
             return;
           }
 
+          // Ver la solicitud antes de enviarla
+          const requestBody = { subscription, username };
+          console.log("Solicitud al servidor (antes de enviar):", requestBody);
+
           // Enviar la suscripción al servidor
           fetch("https://api.juankicr.dev/push-subscribe", {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({ subscription, username })
+            body: JSON.stringify(requestBody)
           })
             .then((response) => response.json())
             .then((data) => {
