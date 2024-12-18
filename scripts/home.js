@@ -51,7 +51,7 @@ const connectWebSocket = () => {
 
     // Intentar enviar la suscripción al servidor de notificaciones
     try {
-      const response = await fetch("https://api.juankicr.dev/push-subscribe", {
+      const response = await fetch("https://api.juankicr.dev/notifications/push-subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, subscription })
