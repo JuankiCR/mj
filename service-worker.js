@@ -1,11 +1,11 @@
-const CACHE_NAME = "mj-pwa-cache-v1";
+const CACHE_NAME = "mj-pwa-cache-v2";
 const urlsToCache = [
   "/",
   "/pages/home/index.html",
   "/styles/globals.css",
   "/styles/home.css",
   "/scripts/home.js",
-  "/assets/images/icons/icon-192x192.png",
+  "/assets/images/icons/icon-128x128.png",
   "/assets/images/icons/icon-512x512.png",
   "/assets/mj.jpg"
 ];
@@ -58,7 +58,7 @@ self.addEventListener("push", (event) => {
   const title = data.title || "Nueva notificación";
   const options = {
     body: data.body || "Tienes un nuevo mensaje.",
-    icon: data.icon || "/assets/images/icons/icon-192x192.png",
+    icon: data.icon || "/assets/images/icons/icon-128x128.png",
     data: data.url || "/"
   };
 
