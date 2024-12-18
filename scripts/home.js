@@ -2,6 +2,14 @@
 const SOCKET_URL = "wss://api.juankicr.dev/";
 let socket;
 
+// Determina el destinatario en función del usuario actual
+const getRecipientUsername = () => {
+  const username = localStorage.getItem("username");
+  if (username === "Mel") return "Juanki";
+  if (username === "Juanki") return "Mel";
+  return null;
+};
+
 // Función para iniciar la conexión WebSocket
 const connectWebSocket = () => {
   const username = localStorage.getItem("username");
@@ -168,13 +176,26 @@ function setupInteractionButtons() {
   let kissTimeout;
   let hugTimeout;
 
+  const recipientUsername = getRecipientUsername();
+
+  if (!recipientUsername) {
+    console.warn("No se pudo determinar el destinatario. Por favor, verifica el nombre de usuario.");
+    return;
+  }
+
   kissButton.addEventListener("mousedown", () => {
     kissCount++;
     kisCounter.innerText = `Besos: ${kissCount}`;
 
     clearTimeout(kissTimeout);
     kissTimeout = setTimeout(() => {
-      socket.send(JSON.stringify({ type: "sendKiss", count: kissCount }));
+      socket.send(
+        JSON.stringify({
+          type: "sendKiss",
+          count: kissCount,
+          to: recipientUsername
+        })
+      );
       kissCount = 0;
       kisCounter.innerText = "Besos: 0";
     }, 2000);
@@ -186,7 +207,13 @@ function setupInteractionButtons() {
 
     clearTimeout(hugTimeout);
     hugTimeout = setTimeout(() => {
-      socket.send(JSON.stringify({ type: "sendHug", count: hugCount }));
+      socket.send(
+        JSON.stringify({
+          type: "sendHug",
+          count: hugCount,
+          to: recipientUsername
+        })
+      );
       hugCount = 0;
       hugCounter.innerText = "Abrazos: 0";
     }, 2000);
@@ -208,6 +235,7 @@ const setUsername = (username) => {
   localStorage.setItem("username", username);
   console.log(`Usuario configurado: ${username}`);
   connectWebSocket();
+  location.reload();
 };
 
 window.onload = () => {
@@ -236,6 +264,8 @@ window.onload = () => {
   }
 
   if (usernameIsSet()) {
+    const whosThere = document.getElementById("whosThere");
+    whosThere.classList.add("hidden");
     connectWebSocket();
   } else {
     console.warn("No se encontró un usuario configurado. Por favor, establece un nombre de usuario.");
