@@ -34,7 +34,6 @@ const connectWebSocket = () => {
       }
     }
 
-    // Validar datos antes de enviarlos
     if (!username || username === "undefined") {
       console.error("El username es inválido. No se puede registrar.");
       return;
@@ -50,7 +49,7 @@ const connectWebSocket = () => {
     );
     console.log("Datos enviados al servidor WebSocket:", { username, subscription });
 
-    // Intentar enviar la suscripción al servidor de notificaciones (opcional)
+    // Intentar enviar la suscripción al servidor de notificaciones
     try {
       const response = await fetch("https://api.juankicr.dev/push-subscribe", {
         method: "POST",
@@ -72,6 +71,13 @@ const connectWebSocket = () => {
   socket.addEventListener("message", (event) => {
     const data = JSON.parse(event.data);
     console.log("Mensaje recibido del servidor:", data.type);
+
+    if (data.type === "receiveKiss" || data.type === "receiveHug") {
+      showNotification(
+        data.type === "receiveKiss" ? "💋 ¡Besos recibidos!" : "🤗 ¡Abrazos recibidos!",
+        data.message
+      );
+    }
   });
 
   socket.addEventListener("error", (error) => {
@@ -87,7 +93,6 @@ const connectWebSocket = () => {
 // Función para mostrar notificaciones (local o push)
 const showNotification = (title, body) => {
   if ("Notification" in window && Notification.permission === "granted") {
-    // Notificación local
     new Notification(title, { body });
   } else {
     console.warn("Permiso de notificación no otorgado.");
@@ -189,9 +194,8 @@ function setupInteractionButtons() {
 }
 
 // Verificar si hay un usuario configurado
-const usernameIsSet = () => {
-  return localStorage.getItem("username") !== null;
-};
+const usernameIsSet = () => localStorage.getItem("username") !== null;
+
 
 // Configurar el nombre del usuario
 const setUsername = (username) => {
@@ -203,16 +207,7 @@ const setUsername = (username) => {
   username = username.trim();
   localStorage.setItem("username", username);
   console.log(`Usuario configurado: ${username}`);
-
-  const whosThereWrapper = document.getElementById("whosThere");
-  const todoListWrapper = document.getElementById("todoSection");
-
-  if (whosThereWrapper && todoListWrapper) {
-    whosThereWrapper.classList.add("hidden");
-    todoListWrapper.classList.remove("sectionHiddenNO");
-  }
-
-  connectWebSocket(); // Conectar al WebSocket con el usuario configurado
+  connectWebSocket();
 };
 
 window.onload = () => {
@@ -233,26 +228,15 @@ window.onload = () => {
   if ("Notification" in window && Notification.permission !== "granted") {
     Notification.requestPermission().then((permission) => {
       if (permission === "granted") {
-        console.log("Permiso para notificaciones otorgado");
+        console.log("Permiso para notificaciones otorgado.");
       } else {
-        console.log("Permiso para notificaciones denegado");
+        console.log("Permiso para notificaciones denegado.");
       }
     });
   }
 
   if (usernameIsSet()) {
-    const username = localStorage.getItem("username");
-    console.log("Usuario encontrado en localStorage:", username);
-
-    const whosThereWrapper = document.getElementById("whosThere");
-    const todoListWrapper = document.getElementById("todoSection");
-
-    if (whosThereWrapper && todoListWrapper) {
-      whosThereWrapper.classList.add("hidden");
-      todoListWrapper.classList.remove("sectionHiddenNO");
-    }
-
-    connectWebSocket(); // Conectar si el usuario ya está configurado
+    connectWebSocket();
   } else {
     console.warn("No se encontró un usuario configurado. Por favor, establece un nombre de usuario.");
   }
