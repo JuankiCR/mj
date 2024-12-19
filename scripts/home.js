@@ -161,6 +161,8 @@ const setupInteractionButtons = () => {
   const hugButton = document.getElementById("sendHugs");
   let kissCount = 0;
   let hugCount = 0;
+  let kissTimeout;
+  let hugTimeout;
 
   kissButton.addEventListener("mousedown", () => {
     kissCount++;
