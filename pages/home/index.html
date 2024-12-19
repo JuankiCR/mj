@@ -59,6 +59,11 @@
         </div>
         <button id="sendKisses">Enviar Besos</button>
         <button id="sendHugs">Enviar Abrazos</button>
+        <button 
+          id="seeLocalStorage" 
+          onclick="showLocalStorage()" 
+        
+        >Enviar Abrazos</button>
       </div>
     </section>
 
@@ -73,5 +78,11 @@
     </section>
   <script src="../../scripts/global.js"></script>
   <script src="../../scripts/home.js"></script>
+  <script>
+    const showLocalStorage = () => {
+      const username = localStorage.getItem('username');
+      alert(username);
+    }
+  </script>
 </body>
 </html>
