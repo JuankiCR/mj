@@ -43,7 +43,6 @@ const connectWebSocket = () => {
     }
 
     socket.send(JSON.stringify({ type: "register", username, subscription }));
-    alert(`¡Hola, ${username}! Ahora puedes enviar besos y abrazos a tu ser querido.`);
     console.log("Datos enviados al WebSocket:", { username, subscription });
 
     try {
