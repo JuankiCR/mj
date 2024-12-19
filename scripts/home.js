@@ -33,7 +33,7 @@ const connectWebSocket = () => {
       try {
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: "QktHVnNmSzc5M241U1p6Y2ZqTmY5ZWpLeFdnRE1JU1NHcFBBd2ZRMVlaYUVYeVdtT3h2QUQ0WE9aeHNFVlVuUDFjNVFodTlPck5aakJQcTRUMjYyQ2hV",
+          applicationServerKey: "BKGVsfK793n5SZzcfjNf9ejKxWgDMISSGpPAwfQ1YZaEXyWmOxvAD4XOZxsEVUnP1c5Qhu9OrNZjBPq4T262ChU",
         });
         console.log("Nueva suscripción creada:", subscription);
       } catch (error) {
