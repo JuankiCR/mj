@@ -157,6 +157,8 @@ const setupInteractionButtons = () => {
     return;
   }
 
+  const kissCounter = document.getElementById("kissCounter");
+  const hugCounter = document.getElementById("kissCounter");
   const kissButton = document.getElementById("sendKisses");
   const hugButton = document.getElementById("sendHugs");
   let kissCount = 0;
@@ -167,8 +169,10 @@ const setupInteractionButtons = () => {
   kissButton.addEventListener("mousedown", () => {
     kissCount++;
     clearTimeout(kissTimeout);
+    kissCounter.innerText = `Besos: ${kissCount}`;
     kissTimeout = setTimeout(() => {
       socket.send(JSON.stringify({ type: "sendKiss", count: kissCount, to: recipientUsername }));
+      kissCounter.innerText = "Besos: 0";
       kissCount = 0;
     }, 2000);
   });
@@ -176,17 +180,17 @@ const setupInteractionButtons = () => {
   hugButton.addEventListener("mousedown", () => {
     hugCount++;
     clearTimeout(hugTimeout);
+    hugCounter.innerText = `Abrazos: ${hugCount}`;
     hugTimeout = setTimeout(() => {
       socket.send(JSON.stringify({ type: "sendHug", count: hugCount, to: recipientUsername }));
+      hugCounter.innerText = "Abrazos: 0";
       hugCount = 0;
     }, 2000);
   });
 };
 
-
 // Verificar si hay un usuario configurado
 const usernameIsSet = () => localStorage.getItem("username") !== null;
-
 
 // Configurar el nombre del usuario
 const setUsername = (username) => {
@@ -199,7 +203,6 @@ const setUsername = (username) => {
   localStorage.setItem("username", username);
   console.log(`Usuario configurado: ${username}`);
   connectWebSocket();
-  alert(`¡Hola, ${username}! Ahora puedes enviar besos y abrazos a tu ser querido.`);
   location.reload();
 };
 
