@@ -1,12 +1,6 @@
-const CACHE_NAME = "mj-pwa-cache-v4";
+const CACHE_NAME = "mj-pwa-cache-v6";
 const urlsToCache = [
   "/",
-  "/pages/home/index.html",
-  "/styles/globals.css",
-  "/styles/home.css",
-  "/scripts/home.js",
-  "/assets/images/icons/icon-128x128.png",
-  "/assets/images/icons/icon-512x512.png",
   "/assets/mj.jpg"
 ];
 
