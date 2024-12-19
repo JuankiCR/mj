@@ -1,4 +1,4 @@
-const CACHE_NAME = "mj-pwa-cache-v3";
+const CACHE_NAME = "mj-pwa-cache-v4";
 const urlsToCache = [
   "/",
   "/pages/home/index.html",

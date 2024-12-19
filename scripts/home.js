@@ -15,16 +15,16 @@ const connectWebSocket = () => {
   const username = localStorage.getItem("username");
 
   if (!username) {
-    console.warn("No se encontró un usuario configurado. Esperando configuración...");
+    console.warn("No se encontró un usuario configurado. Configúralo antes de conectar.");
     return;
   }
 
-  console.log(`Intentando conectar al WebSocket con el usuario: ${username}`);
+  console.log(`Conectando al WebSocket como: ${username}`);
 
   socket = new WebSocket(SOCKET_URL);
 
   socket.addEventListener("open", async () => {
-    console.log("Conectado al servidor WebSocket");
+    console.log("Conexión WebSocket establecida.");
 
     const registration = await navigator.serviceWorker.ready;
     let subscription = await registration.pushManager.getSubscription();
@@ -33,53 +33,36 @@ const connectWebSocket = () => {
       try {
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: "QktHVnNmSzc5M241U1p6Y2ZqTmY5ZWpLeFdnRE1JU1NHcFBBd2ZRMVlaYUVYeVdtT3h2QUQ0WE9aeHNFVlVuUDFjNVFodTlPck5aakJQcTRUMjYyQ2hV"
+          applicationServerKey: "QktHVnNmSzc5M241U1p6Y2ZqTmY5ZWpLeFdnRE1JU1NHcFBBd2ZRMVlaYUVYeVdtT3h2QUQ0WE9aeHNFVlVuUDFjNVFodTlPck5aakJQcTRUMjYyQ2hV",
         });
-        console.log("Nueva suscripción push creada:", subscription);
+        console.log("Nueva suscripción creada:", subscription);
       } catch (error) {
-        console.error("Error al crear la suscripción push:", error);
+        console.error("Error al crear la suscripción:", error);
         return;
       }
     }
 
-    if (!username || username === "undefined") {
-      console.error("El username es inválido. No se puede registrar.");
-      return;
-    }
+    socket.send(JSON.stringify({ type: "register", username, subscription }));
+    console.log("Datos enviados al WebSocket:", { username, subscription });
 
-    // Enviar la información al servidor WebSocket
-    socket.send(
-      JSON.stringify({
-        type: "register",
-        username,
-        subscription
-      })
-    );
-    alert(`Conexión establecida con el servidor WebSocket. ¡Listo para enviar notificaciones! ${username}`);	
-    console.log("Datos enviados al servidor WebSocket:", { username, subscription });
-
-    // Intentar enviar la suscripción al servidor de notificaciones
     try {
       const response = await fetch("https://api.juankicr.dev/notifications/push-subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, subscription })
+        body: JSON.stringify({ username, subscription }),
       });
 
-      const result = await response.json();
       if (!response.ok) {
-        console.error("Error al enviar la suscripción al servidor:", result.message);
-      } else {
-        console.log("Suscripción almacenada en el servidor:", result);
+        console.error("Error al registrar la suscripción en el servidor.");
       }
     } catch (error) {
-      console.error("Error al enviar la suscripción al servidor:", error);
+      console.error("Error al registrar la suscripción:", error);
     }
   });
 
   socket.addEventListener("message", (event) => {
     const data = JSON.parse(event.data);
-    console.log("Mensaje recibido del servidor:", data.type);
+    console.log("Mensaje recibido del servidor:", data);
 
     if (data.type === "receiveKiss" || data.type === "receiveHug") {
       showNotification(
@@ -89,13 +72,13 @@ const connectWebSocket = () => {
     }
   });
 
-  socket.addEventListener("error", (error) => {
-    console.error("Error en la conexión WebSocket:", error);
+  socket.addEventListener("close", () => {
+    console.log("Conexión cerrada. Reintentando...");
+    setTimeout(connectWebSocket, 5000);
   });
 
-  socket.addEventListener("close", () => {
-    console.log("Conexión cerrada con el servidor WebSocket. Reintentando...");
-    setTimeout(() => connectWebSocket(), 5000);
+  socket.addEventListener("error", (error) => {
+    console.error("Error en la conexión WebSocket:", error);
   });
 };
 
@@ -104,7 +87,7 @@ const showNotification = (title, body) => {
   if ("Notification" in window && Notification.permission === "granted") {
     new Notification(title, { body });
   } else {
-    console.warn("Permiso de notificación no otorgado.");
+    console.warn("Permiso para notificaciones no otorgado.");
   }
 };
 
@@ -167,59 +150,37 @@ function startCountdown() {
 }
 
 // Configurar botones de interacción
-function setupInteractionButtons() {
-  const kissButton = document.getElementById("sendKisses");
-  const hugButton = document.getElementById("sendHugs");
-  const kisCounter = document.getElementById("kissCounter");
-  const hugCounter = document.getElementById("hugCounter");
-  let kissCount = 0;
-  let hugCount = 0;
-  let kissTimeout;
-  let hugTimeout;
-
+const setupInteractionButtons = () => {
   const recipientUsername = getRecipientUsername();
-
   if (!recipientUsername) {
-    console.warn("No se pudo determinar el destinatario. Por favor, verifica el nombre de usuario.");
+    console.warn("No se pudo determinar el destinatario.");
     return;
   }
 
+  const kissButton = document.getElementById("sendKisses");
+  const hugButton = document.getElementById("sendHugs");
+  let kissCount = 0;
+  let hugCount = 0;
+
   kissButton.addEventListener("mousedown", () => {
     kissCount++;
-    kisCounter.innerText = `Besos: ${kissCount}`;
-
     clearTimeout(kissTimeout);
     kissTimeout = setTimeout(() => {
-      socket.send(
-        JSON.stringify({
-          type: "sendKiss",
-          count: kissCount,
-          to: recipientUsername
-        })
-      );
+      socket.send(JSON.stringify({ type: "sendKiss", count: kissCount, to: recipientUsername }));
       kissCount = 0;
-      kisCounter.innerText = "Besos: 0";
     }, 2000);
   });
 
   hugButton.addEventListener("mousedown", () => {
     hugCount++;
-    hugCounter.innerText = `Abrazos: ${hugCount}`;
-
     clearTimeout(hugTimeout);
     hugTimeout = setTimeout(() => {
-      socket.send(
-        JSON.stringify({
-          type: "sendHug",
-          count: hugCount,
-          to: recipientUsername
-        })
-      );
+      socket.send(JSON.stringify({ type: "sendHug", count: hugCount, to: recipientUsername }));
       hugCount = 0;
-      hugCounter.innerText = "Abrazos: 0";
     }, 2000);
   });
-}
+};
+
 
 // Verificar si hay un usuario configurado
 const usernameIsSet = () => localStorage.getItem("username") !== null;
