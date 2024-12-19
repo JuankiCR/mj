@@ -55,6 +55,7 @@ const connectWebSocket = () => {
         subscription
       })
     );
+    alert("Conexión establecida con el servidor WebSocket. ¡Listo para enviar notificaciones!", { username });
     console.log("Datos enviados al servidor WebSocket:", { username, subscription });
 
     // Intentar enviar la suscripción al servidor de notificaciones
