@@ -199,6 +199,7 @@ const setUsername = (username) => {
   localStorage.setItem("username", username);
   console.log(`Usuario configurado: ${username}`);
   connectWebSocket();
+  alert(`¡Hola, ${username}! Ahora puedes enviar besos y abrazos a tu ser querido.`);
   location.reload();
 };
 
