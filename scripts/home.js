@@ -64,6 +64,13 @@ const connectWebSocket = () => {
     const data = JSON.parse(event.data);
     console.log("Mensaje recibido del servidor:", data);
 
+    if (data.type === "ping") {
+      console.log("Ping recibido, enviando Pong...");
+      socket.send(JSON.stringify({ type: "pong" }));
+      return;
+    }
+  
+
     if (data.type === "receiveKiss" || data.type === "receiveHug") {
       showNotification(
         data.type === "receiveKiss" ? "💋 ¡Besos recibidos!" : "🤗 ¡Abrazos recibidos!",
@@ -158,7 +165,7 @@ const setupInteractionButtons = () => {
   }
 
   const kissCounter = document.getElementById("kissCounter");
-  const hugCounter = document.getElementById("kissCounter");
+  const hugCounter = document.getElementById("hugCounter");
   const kissButton = document.getElementById("sendKisses");
   const hugButton = document.getElementById("sendHugs");
   let kissCount = 0;
