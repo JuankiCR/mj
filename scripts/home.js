@@ -131,8 +131,13 @@ const createHearts = () => {
 // Cuenta regresiva para el aniversario
 function startCountdown() {
   const AnniversaryDay = 7;
+  const now = new Date();
   const nextAnniversary = new Date();
-  nextAnniversary.setMonth(nextAnniversary.getMonth() + 1);
+
+  if (now.getDate() > AnniversaryDay) {
+    nextAnniversary.setMonth(now.getMonth() + 1);
+  }
+
   nextAnniversary.setDate(AnniversaryDay);
   nextAnniversary.setHours(0, 0, 0, 0);
 
